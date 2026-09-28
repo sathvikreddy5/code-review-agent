@@ -2,7 +2,6 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { reviewCode, learnFromFeedback } from "./reviewer.js";
-import prisma from "./prisma.js";
 
 const app = express();
 
