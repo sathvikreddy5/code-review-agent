@@ -1,7 +1,11 @@
 import { remember, recall } from "./hindsight.js";
 import { generateReview } from "./aiReviewer.js";
 
-export async function reviewCode(code, language = "JavaScript") {
+export async function reviewCode(
+  code,
+  language = "JavaScript",
+  fileType = "Auto Detect",
+) {
   console.log("🧠 Searching Hindsight for relevant team knowledge...");
 
   const memoryQuery = `
@@ -33,7 +37,7 @@ ${code}
 
   console.log("🤖 Asking AI to review the code...");
 
-  const review = await generateReview(code, language, memories);
+  const review = await generateReview(code, language, memories, fileType);
 
   return {
     review,

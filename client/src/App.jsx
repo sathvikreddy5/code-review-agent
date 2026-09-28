@@ -53,6 +53,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [language, setLanguage] = useState("JavaScript");
+  const [fileType, setFileType] = useState("Auto Detect");
   // ================================
   // TEACH AGENT
   // ================================
@@ -90,6 +91,7 @@ function App() {
         body: JSON.stringify({
           code,
           language,
+          fileType,
         }),
       });
 
@@ -326,6 +328,19 @@ function App() {
                     <option value="Go">Go</option>
                     <option value="Rust">Rust</option>
                     <option value="SQL">SQL</option>
+                  </select>
+
+                  <select
+                    value={fileType}
+                    onChange={(event) => setFileType(event.target.value)}
+                    className="language-select"
+                  >
+                    <option value="Auto Detect">Auto Detect</option>
+                    <option value="Controller">Controller</option>
+                    <option value="Service">Service</option>
+                    <option value="Repository">Repository</option>
+                    <option value="Model / Entity">Model / Entity</option>
+                    <option value="Utility">Utility</option>
                   </select>
                 </div>
 
@@ -886,10 +901,8 @@ function App() {
                   <div className="workflow-icon">
                     <Database size={18} />
                   </div>
-
                   <strong>Remember</strong>
-
-                  <span>PostgreSQL stores review history</span>
+                  <span>Hindsight retains learned team knowledge</span>{" "}
                 </div>
               </div>
             </section>

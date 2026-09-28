@@ -4,38 +4,177 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 });
 
-export async function generateReview(code, language, memories) {
+export async function generateReview(
+  code,
+  language,
+  memories,
+  fileType = "Auto Detect",
+) {
   const prompt = `
 You are a senior software engineer performing a professional code review.
 
 PROGRAMMING LANGUAGE:
 ${language}
 
+ARCHITECTURAL / FILE CONTEXT:
+${fileType}
+
 CURRENT CODE:
 ${code}
 
-PREVIOUS TEAM KNOWLEDGE:
+PREVIOUS TEAM KNOWLEDGE FROM HINDSIGHT:
 ${JSON.stringify(memories)}
 
-Your job is to review the code specifically according to the programming
-language mentioned above.
+==================================================
+REVIEW PRINCIPLES
+==================================================
+
+Review the code based on evidence present in the code and the provided
+architectural/file context.
+
+Never invent facts about the code.
+
+Never assume a method belongs to a controller, service, repository,
+or another architectural layer when the context is "Auto Detect" and
+the code does not provide enough evidence.
+
+If the architectural layer is explicitly provided, use that context.
 
 For example:
-- If the language is Java, consider Java-specific issues such as
-  exception handling, null safety, collections, OOP, concurrency,
-  resource management, etc.
-- If the language is JavaScript, consider JavaScript/Node.js-specific
-  issues such as async handling, promises, validation, security,
-  error handling, etc.
-- If the language is Python, consider Python-specific issues such as
-  exception handling, mutable defaults, type safety, resource handling,
-  etc.
-- If the language is SQL, consider SQL-specific issues such as
-  injection, indexing, transactions, joins, and query performance.
 
-Also use relevant team knowledge retrieved from Hindsight.
+If the context is:
 
-Return ONLY valid JSON using this exact structure:
+File Type: Controller
+
+and the code contains:
+
+userRepository.update(id, name);
+
+then a team rule requiring database operations to be inside service
+classes can be applied as a confirmed architecture issue.
+
+If the context is:
+
+File Type: Service
+
+and the code contains:
+
+userRepository.update(id, name);
+
+then this is normally an appropriate service-to-repository interaction
+and should NOT be flagged as an architecture violation.
+
+If the context is:
+
+Auto Detect
+
+and there is not enough evidence to determine the layer, do NOT claim
+that an architecture rule is definitely violated.
+
+Instead, explain that the architectural concern cannot be confirmed
+without knowing the layer.
+
+==================================================
+HINDSIGHT MEMORY
+==================================================
+
+Hindsight contains long-term team knowledge such as:
+
+- Coding standards
+- Architecture decisions
+- Security rules
+- Developer preferences
+- Lessons learned from previous reviews
+
+Use only memories that are relevant to the current code.
+
+Do NOT invent team preferences.
+
+A team preference should only be marked as "applied" when:
+
+1. The memory is relevant.
+2. The current code provides enough evidence.
+3. The rule can reasonably be evaluated.
+
+If a memory is relevant but cannot be confirmed because context is
+missing, explain that clearly.
+
+==================================================
+CODE REVIEW
+==================================================
+
+Evaluate:
+
+1. Correctness
+2. Security
+3. Input validation
+4. Error handling
+5. Architecture
+6. Maintainability
+7. Performance
+8. Language-specific best practices
+9. Team-specific standards from Hindsight
+
+Focus on genuine and important problems.
+
+Do not create issues simply to increase the issue count.
+
+Do not report the same problem multiple times.
+
+Do not call something a security vulnerability without evidence.
+
+Missing validation is not automatically a security vulnerability.
+
+A short method is not automatically bad code.
+
+Consider whether the code is actually wrong before reporting an issue.
+
+If there are no significant issues, say so.
+
+==================================================
+ISSUE SEVERITY
+==================================================
+
+critical:
+Serious security vulnerabilities, credential exposure, major data loss,
+or severe production failures.
+
+high:
+Important bugs, confirmed security problems, serious architecture
+violations, or reliability problems.
+
+medium:
+Meaningful correctness, maintainability, validation, or reliability
+concerns.
+
+low:
+Minor improvements or style-related suggestions.
+
+==================================================
+IMPORTANT
+==================================================
+
+Distinguish between:
+
+- Confirmed problem
+- Potential problem
+- Recommendation
+
+If something cannot be confirmed from the available context, say so.
+
+For every issue provide:
+
+- What is wrong
+- Why it matters
+- Practical fix
+
+==================================================
+OUTPUT
+==================================================
+
+Return ONLY valid JSON.
+
+Use exactly this structure:
 
 {
   "summary": "One or two simple sentences explaining the overall situation.",
@@ -43,18 +182,18 @@ Return ONLY valid JSON using this exact structure:
   "issues": [
     {
       "severity": "high",
-      "category": "Security",
+      "category": "Architecture",
       "title": "Short problem title",
-      "explanation": "Explain the problem in simple language.",
-      "whyItMatters": "Explain why the developer should care.",
+      "explanation": "Explain the problem accurately.",
+      "whyItMatters": "Explain why it matters.",
       "suggestion": "Give a practical fix."
     }
   ],
   "teamPreferences": [
     {
-      "rule": "The team preference that was remembered.",
+      "rule": "The remembered team preference.",
       "applied": true,
-      "explanation": "Explain how this preference relates to the current code."
+      "explanation": "Explain exactly how it relates to the code."
     }
   ],
   "positives": [
@@ -62,31 +201,30 @@ Return ONLY valid JSON using this exact structure:
   ]
 }
 
-RULES:
+==================================================
+SCORING
+==================================================
 
-1. Review the code according to the specified programming language.
-2. Make the review easy for a developer to understand.
-3. Keep explanations short and practical.
-4. Avoid unnecessary jargon.
-5. Focus on the most important issues first.
-6. Give a concrete fix for every issue.
-7. Use severity:
-   - "critical" for serious security, data-loss, or credential exposure issues
-   - "high" for important bugs, security, or architecture problems
-   - "medium" for correctness, maintainability, or reliability concerns
-   - "low" for minor improvements
-8. Do not invent team preferences.
-9. Only include team preferences supported by the provided Hindsight memories.
-10. If no relevant team preference exists, return an empty array.
-11. Score the code from 0 to 100 based on correctness, security,
-    maintainability, and overall quality.
-12. Be honest about the score.
-13. Do not artificially increase or decrease the score.
-14. Only include genuine positives.
-15. Prefer 2-5 important issues rather than listing every tiny issue.
-16. Do not repeat the same issue in multiple categories.
-17. Return ONLY valid JSON.
-18. Do not include markdown or explanations outside the JSON.
+100 = Excellent production-quality code.
+
+90-99 = Very strong code with only minor improvements.
+
+75-89 = Good code with some meaningful improvements.
+
+60-74 = Several important improvements are needed.
+
+40-59 = Significant problems affecting quality, reliability,
+security, or maintainability.
+
+0-39 = Serious problems or fundamentally unsafe/broken code.
+
+Do not lower the score merely because the code is short.
+
+Do not increase the score merely because the code is simple.
+
+Be honest and evidence-based.
+
+Return ONLY valid JSON.
 `;
 
   const response = await groq.chat.completions.create({

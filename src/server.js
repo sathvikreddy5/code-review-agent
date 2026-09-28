@@ -20,7 +20,11 @@ app.get("/", (req, res) => {
 
 app.post("/api/review", async (req, res) => {
   try {
-    const { code, language = "JavaScript" } = req.body;
+    const {
+      code,
+      language = "JavaScript",
+      filetype = "Auto Detect",
+    } = req.body;
 
     if (!code || !code.trim()) {
       return res.status(400).json({
@@ -28,7 +32,7 @@ app.post("/api/review", async (req, res) => {
       });
     }
 
-    const result = await reviewCode(code, language);
+    const result = await reviewCode(code, language, filetype);
 
     res.json({
       success: true,

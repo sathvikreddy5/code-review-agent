@@ -2720,69 +2720,94 @@ textarea {
   }
 }
 
-.language-selector {
-  display: flex;
-  align-items: center;
-}
-
-.language-select {
-  background: #171923;
-  color: #ffffff;
-  border: 1px solid #303342;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-}
-
-.language-select:focus {
-  border-color: #818cf8;
-}
-
-.language-select option {
-  background: #171923;
-  color: #ffffff;
-}
+/* =========================================================
+   CODE INPUT SELECTORS
+========================================================= */
 
 .language-selector {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .language-select {
-  background: #171923;
-  color: #ffffff;
+  min-width: 120px;
+  height: 34px;
+  padding: 0 30px 0 10px;
   border: 1px solid #303342;
   border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
+  background-color: #171923;
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 10px;
   font-weight: 600;
   outline: none;
   cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.language-select:hover {
+  border-color: #454b5c;
+  background-color: #1b1e28;
 }
 
 .language-select:focus {
   border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.08);
 }
 
 .language-select option {
   background: #171923;
-  color: #ffffff;
+  color: #e2e8f0;
 }
+
+/* =========================================================
+   HINDSIGHT MEMORY BADGE
+========================================================= */
 
 .memory-applied-badge {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-top: 10px;
+  margin: 10px 18px 0;
   padding: 6px 10px;
   width: fit-content;
   border: 1px solid rgba(129, 140, 248, 0.25);
   border-radius: 999px;
   background: rgba(129, 140, 248, 0.08);
   color: #a5b4fc;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
+}
+
+.memory-applied-badge svg {
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   SELECTOR RESPONSIVE
+========================================================= */
+
+@media (max-width: 600px) {
+  .language-selector {
+    width: 100%;
+    justify-content: stretch;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .language-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .memory-applied-badge {
+    margin-left: 13px;
+    margin-right: 13px;
+  }
 }
