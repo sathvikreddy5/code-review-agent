@@ -313,35 +313,41 @@ function App() {
 
             <div className="review-workspace-grid">
               <section className="editor-section">
-                <div className="language-selector">
-                  <select
-                    value={language}
-                    onChange={(event) => setLanguage(event.target.value)}
-                    className="language-select"
-                  >
-                    <option value="JavaScript">JavaScript</option>
-                    <option value="Java">Java</option>
-                    <option value="Python">Python</option>
-                    <option value="C++">C++</option>
-                    <option value="C">C</option>
-                    <option value="TypeScript">TypeScript</option>
-                    <option value="Go">Go</option>
-                    <option value="Rust">Rust</option>
-                    <option value="SQL">SQL</option>
-                  </select>
+                <div className="section-header">
+                  <div className="section-title">
+                    <Code2 size={16} />
+                    <span>Code Input</span>
+                  </div>
 
-                  <select
-                    value={fileType}
-                    onChange={(event) => setFileType(event.target.value)}
-                    className="language-select"
-                  >
-                    <option value="Auto Detect">Auto Detect</option>
-                    <option value="Controller">Controller</option>
-                    <option value="Service">Service</option>
-                    <option value="Repository">Repository</option>
-                    <option value="Model / Entity">Model / Entity</option>
-                    <option value="Utility">Utility</option>
-                  </select>
+                  <div className="language-selector">
+                    <select
+                      className="language-select"
+                      value={language}
+                      onChange={(e) => setLanguage(e.target.value)}
+                    >
+                      <option value="JavaScript">JavaScript</option>
+                      <option value="TypeScript">TypeScript</option>
+                      <option value="Java">Java</option>
+                      <option value="Python">Python</option>
+                      <option value="C++">C++</option>
+                      <option value="C#">C#</option>
+                      <option value="Go">Go</option>
+                      <option value="SQL">SQL</option>
+                    </select>
+
+                    <select
+                      className="language-select"
+                      value={fileType}
+                      onChange={(e) => setFileType(e.target.value)}
+                    >
+                      <option value="Controller">Controller</option>
+                      <option value="Service">Service</option>
+                      <option value="Repository">Repository</option>
+                      <option value="API">API</option>
+                      <option value="Component">Component</option>
+                      <option value="Utility">Utility</option>
+                    </select>
+                  </div>
                 </div>
 
                 <div className="editor-wrapper">
