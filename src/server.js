@@ -96,11 +96,11 @@ app.post("/api/feedback", async (req, res) => {
       message: "Feedback learned successfully 🧠",
     });
   } catch (error) {
-    console.error("Feedback error:", error);
+    console.error("❌ Feedback error:", error);
 
     res.status(500).json({
       success: false,
-      error: "Failed to store feedback",
+      error: error.message || "Failed to store feedback",
     });
   }
 });
@@ -157,11 +157,11 @@ app.get("/api/reviews/:id", async (req, res) => {
       review,
     });
   } catch (error) {
-    console.error("Review details error:", error);
+    console.error("❌ Review error:", error);
 
     res.status(500).json({
       success: false,
-      error: "Failed to fetch review",
+      error: error.message || "Failed to review code",
     });
   }
 });
