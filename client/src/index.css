@@ -2811,3 +2811,123 @@ textarea {
     margin-right: 13px;
   }
 }
+/* =========================================================
+   HINDSIGHT MEMORY - ENHANCED DEMO UI
+========================================================= */
+
+.memory-card-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.memory-card-title span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.memory-card-title small {
+  font-size: 9px;
+  font-weight: 500;
+  color: #71788a;
+}
+
+.memory-retrieved {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(52, 211, 153, 0.18);
+  background: rgba(52, 211, 153, 0.06);
+  color: #6ee7b7;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.preference-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.preference-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.preference-applied {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 4px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  background: rgba(52, 211, 153, 0.07);
+  color: #6ee7b7;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.influence-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.influence-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px solid #292d3a;
+  border-radius: 8px;
+  background: #14161e;
+  color: #aeb5c5;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.influence-step svg {
+  color: #818cf8;
+  flex-shrink: 0;
+}
+
+.influence-final {
+  border-color: rgba(129, 140, 248, 0.25);
+  background: rgba(129, 140, 248, 0.08);
+  color: #c7d2fe;
+}
+
+.influence-final svg {
+  color: #a5b4fc;
+}
+
+@media (max-width: 700px) {
+  .preference-top {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .influence-flow {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .influence-flow > svg {
+    transform: rotate(90deg);
+    align-self: center;
+  }
+
+  .influence-step {
+    justify-content: center;
+  }
+}

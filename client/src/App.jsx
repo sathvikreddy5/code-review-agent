@@ -598,8 +598,17 @@ function App() {
                                 <Brain size={16} />
                               </div>
 
-                              <div>
-                                <strong>{preference.rule}</strong>
+                              <div className="preference-content">
+                                <div className="preference-top">
+                                  <strong>{preference.rule}</strong>
+
+                                  {preference.applied && (
+                                    <span className="preference-applied">
+                                      <CheckCircle2 size={12} />
+                                      Applied
+                                    </span>
+                                  )}
+                                </div>
 
                                 <p>{preference.explanation}</p>
                               </div>
@@ -676,7 +685,13 @@ function App() {
                           <Brain size={15} />
                         </div>
 
-                        <span>Team Memory {index + 1}</span>
+                        <div className="memory-card-title">
+                          <span>
+                            Team Memory {String(index + 1).padStart(2, "0")}
+                          </span>
+
+                          <small>Retrieved by Hindsight</small>
+                        </div>
                       </div>
 
                       <p>
@@ -687,6 +702,11 @@ function App() {
                             memory.observation ||
                             JSON.stringify(memory)}
                       </p>
+
+                      <div className="memory-retrieved">
+                        <CheckCircle2 size={12} />
+                        Relevant to this review
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -713,19 +733,31 @@ function App() {
                   </p>
 
                   <div className="influence-flow">
-                    <span>Past knowledge</span>
+                    <div className="influence-step">
+                      <Brain size={14} />
+                      <span>Past team knowledge</span>
+                    </div>
 
                     <ChevronRight size={15} />
 
-                    <span>Hindsight</span>
+                    <div className="influence-step">
+                      <Brain size={14} />
+                      <span>Hindsight recall</span>
+                    </div>
 
                     <ChevronRight size={15} />
 
-                    <span>Current code</span>
+                    <div className="influence-step">
+                      <Code2 size={14} />
+                      <span>Current code</span>
+                    </div>
 
                     <ChevronRight size={15} />
 
-                    <span>Personalized review</span>
+                    <div className="influence-step influence-final">
+                      <Sparkles size={14} />
+                      <span>Personalized review</span>
+                    </div>
                   </div>
                 </div>
               </section>
