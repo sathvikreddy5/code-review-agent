@@ -8,16 +8,25 @@ datasource db {
 }
 
 model Review {
+  id              String   @id @default(cuid())
+  code            String
+  summary         String
+  score           Int
+  issues          Json
+  teamPreferences Json
+  positives       Json
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model FeedbackEvent {
   id        String   @id @default(cuid())
-  code      String
-  summary   String
-  score     Int
-
-  issues           Json
-  teamPreferences  Json
-  positives        Json
-
+  type      String
+  issue     String?
+  feedback  String?
   createdAt DateTime @default(now())
 
+  @@index([type])
   @@index([createdAt])
 }

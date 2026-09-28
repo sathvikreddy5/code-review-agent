@@ -2931,3 +2931,168 @@ textarea {
     justify-content: center;
   }
 }
+
+.teach-agent-card {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid #2a2a2a;
+  border-radius: 16px;
+  background: #111;
+}
+
+.teach-agent-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.teach-agent-header p {
+  margin: 6px 0 16px;
+  color: #999;
+  font-size: 14px;
+}
+
+.teach-agent-card textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: #0b0b0b;
+  color: white;
+  font-family: inherit;
+  outline: none;
+}
+
+.teach-agent-card textarea:focus {
+  border-color: #666;
+}
+
+.teach-agent-btn {
+  margin-top: 12px;
+  padding: 11px 18px;
+  border: none;
+  border-radius: 9px;
+  background: white;
+  color: black;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.teach-agent-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.teach-success {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #172217;
+  color: #9be29b;
+  font-size: 14px;
+}
+.issue-feedback {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #242630;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.issue-feedback-label {
+  font-size: 12px;
+  color: #8b8f9d;
+}
+
+.issue-feedback-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.issue-feedback {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid #242630;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.issue-feedback-label {
+  font-size: 12px;
+  color: #8b8f9d;
+}
+
+.issue-feedback-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.issue-feedback-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 82px;
+  padding: 8px 13px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* ACCEPT */
+.issue-feedback-btn.accept {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  color: #4ade80;
+}
+
+.issue-feedback-btn.accept:hover {
+  background: rgba(34, 197, 94, 0.22);
+  border-color: #4ade80;
+  color: #86efac;
+}
+
+/* DISMISS */
+.issue-feedback-btn.dismiss {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #f87171;
+}
+
+.issue-feedback-btn.dismiss:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: #f87171;
+  color: #fca5a5;
+}
+
+/* DISABLED */
+.issue-feedback-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.issue-feedback-btn:hover {
+  border-color: #4b4f60;
+}
+
+.issue-feedback-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.issue-feedback-btn.accept:hover {
+  color: #8ee6a1;
+  border-color: #356b43;
+}
+
+.issue-feedback-btn.dismiss:hover {
+  color: #ff8d8d;
+  border-color: #6b3535;
+}

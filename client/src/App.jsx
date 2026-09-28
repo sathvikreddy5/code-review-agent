@@ -67,7 +67,11 @@ function App() {
   // ================================
 
   const [learningEvents, setLearningEvents] = useState([]);
+  const [issueFeedbackLoading, setIssueFeedbackLoading] = useState(null);
 
+  const [insights, setInsights] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
+  const [insightsError, setInsightsError] = useState("");
   // ================================
   // REVIEW CODE
   // ================================
@@ -102,8 +106,30 @@ function App() {
       }
 
       setReview(data.review);
-      setMemories(data.memories || []);
+      const rawMemories = data.memories?.results || [];
+
+      const uniqueMemories = [];
+      const seenMemories = new Set();
+
+      for (const memory of rawMemories) {
+        const text = String(
+          memory.text || memory.content || memory.observation || "",
+        ).trim();
+
+        if (!text) continue;
+
+        const key = text.toLowerCase();
+
+        if (seenMemories.has(key)) continue;
+
+        seenMemories.add(key);
+        uniqueMemories.push(memory);
+
+        if (uniqueMemories.length >= 6) break;
+      }
+
       setLastReviewId(data.reviewId || null);
+      setMemories(uniqueMemories);
 
       setLearningEvents((previous) => [
         {
@@ -111,7 +137,7 @@ function App() {
           type: "review",
           title: "Code review completed",
           description: `AI analyzed the code using ${
-            data.memories?.length || 0
+            data.memories?.results?.length || 0
           } relevant memories.`,
           time: new Date().toLocaleTimeString(),
         },
@@ -176,17 +202,98 @@ function App() {
     }
   }
 
-  // ================================
-  // NAVIGATION
-  // ================================
+  async function handleIssueFeedback(issue, action) {
+    const feedbackText = `
+Developer ${action === "accept" ? "accepted" : "dismissed"} this code review suggestion.
+
+Issue:
+${issue.title}
+
+Category:
+${issue.category}
+
+Severity:
+${issue.severity}
+
+Explanation:
+${issue.explanation}
+
+Developer action:
+${
+  action === "accept"
+    ? "This type of feedback is useful and should be considered in future reviews."
+    : "This type of feedback should not be emphasized or flagged in the same way in future reviews."
+}
+`;
+
+    try {
+      setIssueFeedbackLoading(`${issue.title}-${action}`);
+
+      const response = await fetch(`${API_URL}/api/feedback`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          feedback: feedbackText,
+          type: action === "accept" ? "accept" : "dismiss",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to save feedback");
+      }
+
+      setLearningEvents((previous) => [
+        {
+          id: Date.now(),
+          type: "learning",
+          title:
+            action === "accept"
+              ? "Review suggestion accepted"
+              : "Review suggestion dismissed",
+          description: issue.title,
+          time: new Date().toLocaleTimeString(),
+        },
+        ...previous,
+      ]);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to save feedback.");
+    } finally {
+      setIssueFeedbackLoading(null);
+    }
+  }
 
   function openHistory() {
     setActivePage("history");
+    setSelectedReviewId(null);
   }
 
-  function openReview() {
-    setActivePage("review");
+  async function openInsights() {
+    setActivePage("insights");
     setSelectedReviewId(null);
+
+    try {
+      setInsightsLoading(true);
+      setInsightsError("");
+
+      const response = await fetch(`${API_URL}/api/insights`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load insights");
+      }
+
+      setInsights(data);
+    } catch (err) {
+      console.error(err);
+      setInsightsError(err.message || "Failed to load insights.");
+    } finally {
+      setInsightsLoading(false);
+    }
   }
 
   // ================================
@@ -241,7 +348,10 @@ function App() {
             className={`top-nav-item ${
               activePage === "review" ? "active" : ""
             }`}
-            onClick={openReview}
+            onClick={() => {
+              setActivePage("review");
+              setSelectedReviewId(null);
+            }}
           >
             <Code2 size={16} />
             New Review
@@ -255,6 +365,16 @@ function App() {
           >
             <History size={16} />
             Review History
+          </button>
+
+          <button
+            className={`top-nav-item ${
+              activePage === "insights" ? "active" : ""
+            }`}
+            onClick={openInsights}
+          >
+            <Zap size={16} />
+            Insights
           </button>
         </nav>
 
@@ -287,7 +407,155 @@ function App() {
               }}
             />
           )
+        ) : activePage === "insights" ? (
+          <div className="workspace">
+            <div className="hero-section">
+              <div className="hero-badge">
+                <Zap size={13} />
+                CODEMIND INSIGHTS
+              </div>
+
+              <h1>
+                Understand how your <span>agent is learning.</span>
+              </h1>
+
+              <p>
+                Track reviews, developer feedback, recurring issues, and team
+                knowledge learned over time.
+              </p>
+            </div>
+
+            {insightsLoading && (
+              <div className="empty-review">
+                <div className="empty-review-icon">
+                  <RefreshCw size={30} className="spin" />
+                </div>
+
+                <h3>Loading insights...</h3>
+
+                <p>Analyzing your team's review history and feedback.</p>
+              </div>
+            )}
+
+            {insightsError && (
+              <div className="error-banner">
+                <AlertTriangle size={17} />
+                {insightsError}
+              </div>
+            )}
+
+            {insights && !insightsLoading && (
+              <>
+                <div className="review-workspace-grid">
+                  <div className="result-card">
+                    <div className="result-card-header">
+                      <Code2 size={17} />
+                      Total Reviews
+                    </div>
+
+                    <div className="score-value">
+                      {insights.overview?.totalReviews || 0}
+                    </div>
+                  </div>
+
+                  <div className="result-card">
+                    <div className="result-card-header">
+                      <CheckCircle2 size={17} />
+                      Accepted Suggestions
+                    </div>
+
+                    <div className="score-value score-good">
+                      {insights.overview?.acceptedSuggestions || 0}
+                    </div>
+                  </div>
+
+                  <div className="result-card">
+                    <div className="result-card-header">
+                      <XCircle size={17} />
+                      Dismissed Suggestions
+                    </div>
+
+                    <div className="score-value score-bad">
+                      {insights.overview?.dismissedSuggestions || 0}
+                    </div>
+                  </div>
+
+                  <div className="result-card">
+                    <div className="result-card-header">
+                      <Brain size={17} />
+                      Team Rules Learned
+                    </div>
+
+                    <div className="score-value">
+                      {insights.overview?.taughtRules || 0}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="result-card">
+                  <div className="result-card-header">
+                    <AlertTriangle size={17} />
+                    Recurring Issues
+                  </div>
+
+                  {insights.recurringIssues?.length > 0 ? (
+                    <div className="preferences-list">
+                      {insights.recurringIssues.map((item) => (
+                        <div className="preference-card" key={item.category}>
+                          <div className="preference-icon">
+                            <AlertTriangle size={16} />
+                          </div>
+
+                          <div className="preference-content">
+                            <div className="preference-top">
+                              <strong>{item.category}</strong>
+
+                              <span className="count-badge">{item.count}</span>
+                            </div>
+
+                            <p>Detected across recent code reviews.</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="no-issues">
+                      <CheckCircle2 size={20} />
+                      <span>No recurring issues detected yet.</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="result-card">
+                  <div className="result-card-header">
+                    <MessageSquare size={17} />
+                    Developer Feedback
+                  </div>
+
+                  <div className="memory-grid">
+                    <div className="memory-card">
+                      <div className="memory-card-title">Accepted</div>
+
+                      <p>
+                        {insights.feedback?.accepted || 0} suggestions accepted
+                      </p>
+                    </div>
+
+                    <div className="memory-card">
+                      <div className="memory-card-title">Dismissed</div>
+
+                      <p>
+                        {insights.feedback?.dismissed || 0} suggestions
+                        dismissed
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         ) : (
+          // NEW REVIEW PAGE
           /* ==========================================
              NEW REVIEW PAGE
           ========================================== */
@@ -568,6 +836,42 @@ function App() {
                                   <span>{issue.suggestion}</span>
                                 </div>
                               )}
+
+                              <div className="issue-feedback">
+                                <span className="issue-feedback-label">
+                                  Was this suggestion useful?
+                                </span>
+
+                                <div className="issue-feedback-buttons">
+                                  <button
+                                    className="issue-feedback-btn accept"
+                                    onClick={() =>
+                                      handleIssueFeedback(issue, "accept")
+                                    }
+                                    disabled={issueFeedbackLoading}
+                                  >
+                                    <CheckCircle2 size={14} />
+                                    {issueFeedbackLoading ===
+                                    `${issue.title}-accept`
+                                      ? "Saving..."
+                                      : "Accept"}
+                                  </button>
+
+                                  <button
+                                    className="issue-feedback-btn dismiss"
+                                    onClick={() =>
+                                      handleIssueFeedback(issue, "dismiss")
+                                    }
+                                    disabled={issueFeedbackLoading}
+                                  >
+                                    <XCircle size={14} />
+                                    {issueFeedbackLoading ===
+                                    `${issue.title}-dismiss`
+                                      ? "Saving..."
+                                      : "Dismiss"}
+                                  </button>
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>

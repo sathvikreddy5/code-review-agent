@@ -8,7 +8,38 @@ import { reviewCode, learnFromFeedback } from "./reviewer.js";
 const app = express();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
+
+// =====================================================
+// CONSTANTS
+// =====================================================
+
+const SUPPORTED_LANGUAGES = [
+  "JavaScript",
+  "TypeScript",
+  "Java",
+  "Python",
+  "C++",
+  "C",
+  "Go",
+  "Rust",
+  "SQL",
+];
+
+const SUPPORTED_FILE_TYPES = [
+  "Auto Detect",
+  "Controller",
+  "Service",
+  "Repository",
+  "Component",
+  "Utility",
+  "API Route",
+  "Other",
+];
+
+// =====================================================
+// HEALTH
+// =====================================================
 
 app.get("/", (req, res) => {
   res.json({
@@ -25,19 +56,53 @@ app.post("/api/review", async (req, res) => {
     const {
       code,
       language = "JavaScript",
-      filetype = "Auto Detect",
+      fileType = "Auto Detect",
     } = req.body;
 
-    if (!code || !code.trim()) {
+    // -------------------------------------------------
+    // INPUT VALIDATION
+    // -------------------------------------------------
+
+    if (typeof code !== "string" || !code.trim()) {
       return res.status(400).json({
+        success: false,
         error: "Code is required",
       });
     }
 
-    console.log("🔍 Starting code review...");
+    // Prevent extremely large requests
+    const MAX_CODE_LENGTH = 30000;
 
-    // Hindsight + Groq review
-    const result = await reviewCode(code, language, filetype);
+    if (code.length > MAX_CODE_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        error: `Code is too large. Maximum allowed size is ${MAX_CODE_LENGTH} characters.`,
+      });
+    }
+
+    if (!SUPPORTED_LANGUAGES.includes(language)) {
+      return res.status(400).json({
+        success: false,
+        error: `Unsupported programming language: ${language}`,
+      });
+    }
+
+    if (!SUPPORTED_FILE_TYPES.includes(fileType)) {
+      return res.status(400).json({
+        success: false,
+        error: `Unsupported file type: ${fileType}`,
+      });
+    }
+
+    console.log("🔍 Starting code review...");
+    console.log(`💻 Language: ${language}`);
+    console.log(`📁 File type: ${fileType}`);
+
+    // -------------------------------------------------
+    // HINDSIGHT + GROQ
+    // -------------------------------------------------
+
+    const result = await reviewCode(code, language, fileType);
 
     // -------------------------------------------------
     // SAVE REVIEW TO POSTGRESQL
@@ -56,6 +121,10 @@ app.post("/api/review", async (req, res) => {
 
     console.log(`💾 Review saved to PostgreSQL: ${savedReview.id}`);
 
+    // -------------------------------------------------
+    // RESPONSE
+    // -------------------------------------------------
+
     res.json({
       success: true,
 
@@ -64,9 +133,13 @@ app.post("/api/review", async (req, res) => {
       memories: result.memories || [],
 
       reviewId: savedReview.id,
+
+      language,
+
+      fileType,
     });
   } catch (error) {
-    console.error("Review error:", error);
+    console.error("❌ Review error:", error);
 
     res.status(500).json({
       success: false,
@@ -76,24 +149,73 @@ app.post("/api/review", async (req, res) => {
 });
 
 // =====================================================
-// TEACH AGENT
+// TEACH AGENT / FEEDBACK
 // =====================================================
 
 app.post("/api/feedback", async (req, res) => {
   try {
-    const { feedback } = req.body;
+    const { feedback, type = "teach" } = req.body;
 
-    if (!feedback || !feedback.trim()) {
+    // -------------------------------------------------
+    // INPUT VALIDATION
+    // -------------------------------------------------
+
+    if (typeof feedback !== "string" || !feedback.trim()) {
       return res.status(400).json({
+        success: false,
         error: "Feedback is required",
       });
     }
 
+    if (feedback.length > 5000) {
+      return res.status(400).json({
+        success: false,
+        error: "Feedback is too long.",
+      });
+    }
+
+    // -------------------------------------------------
+    // VALID FEEDBACK TYPES
+    // -------------------------------------------------
+
+    const allowedTypes = ["teach", "accept", "dismiss"];
+
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid feedback type.",
+      });
+    }
+
+    console.log(`🧠 Feedback type: ${type}`);
+
+    // -------------------------------------------------
+    // STORE IN HINDSIGHT
+    // -------------------------------------------------
+
     await learnFromFeedback(feedback);
+
+    // -------------------------------------------------
+    // STORE EVENT IN POSTGRESQL
+    // -------------------------------------------------
+
+    const feedbackEvent = await prisma.feedbackEvent.create({
+      data: {
+        type,
+        feedback: feedback.trim(),
+      },
+    });
+
+    console.log(`💾 Feedback event saved to PostgreSQL: ${feedbackEvent.id}`);
+
+    // -------------------------------------------------
+    // RESPONSE
+    // -------------------------------------------------
 
     res.json({
       success: true,
       message: "Feedback learned successfully 🧠",
+      feedbackEventId: feedbackEvent.id,
     });
   } catch (error) {
     console.error("❌ Feedback error:", error);
@@ -101,6 +223,107 @@ app.post("/api/feedback", async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || "Failed to store feedback",
+    });
+  }
+});
+
+// ==========================================
+// INSIGHTS
+// ==========================================
+
+app.get("/api/insights", async (req, res) => {
+  try {
+    const [
+      totalReviews,
+      acceptedSuggestions,
+      dismissedSuggestions,
+      taughtRules,
+      recentReviews,
+    ] = await Promise.all([
+      prisma.review.count(),
+
+      prisma.feedbackEvent.count({
+        where: {
+          type: "accept",
+        },
+      }),
+
+      prisma.feedbackEvent.count({
+        where: {
+          type: "dismiss",
+        },
+      }),
+
+      prisma.feedbackEvent.count({
+        where: {
+          type: "teach",
+        },
+      }),
+
+      prisma.review.findMany({
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 20,
+        select: {
+          id: true,
+          score: true,
+          issues: true,
+          teamPreferences: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+
+    const categoryCounts = {};
+
+    for (const review of recentReviews) {
+      const issues = Array.isArray(review.issues) ? review.issues : [];
+
+      for (const issue of issues) {
+        const category = issue.category || "Other";
+
+        categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+      }
+    }
+
+    const recurringIssues = Object.entries(categoryCounts)
+      .map(([category, count]) => ({
+        category,
+        count,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    res.json({
+      success: true,
+
+      overview: {
+        totalReviews,
+        acceptedSuggestions,
+        dismissedSuggestions,
+        taughtRules,
+      },
+
+      feedback: {
+        total: acceptedSuggestions + dismissedSuggestions,
+        accepted: acceptedSuggestions,
+        dismissed: dismissedSuggestions,
+      },
+
+      recurringIssues,
+
+      recentReviews: recentReviews.map((review) => ({
+        id: review.id,
+        score: review.score,
+        createdAt: review.createdAt,
+      })),
+    });
+  } catch (error) {
+    console.error("❌ Insights error:", error);
+
+    res.status(500).json({
+      success: false,
+      error: error.message || "Failed to load insights",
     });
   }
 });
@@ -161,7 +384,7 @@ app.get("/api/reviews/:id", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      error: error.message || "Failed to review code",
+      error: error.message || "Failed to fetch review",
     });
   }
 });

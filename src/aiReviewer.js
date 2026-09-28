@@ -174,11 +174,12 @@ OUTPUT
 
 Return ONLY valid JSON.
 
+Do not include a score.
+The application will calculate the score separately.
 Use exactly this structure:
 
 {
   "summary": "One or two simple sentences explaining the overall situation.",
-  "score": 75,
   "issues": [
     {
       "severity": "high",
@@ -201,31 +202,10 @@ Use exactly this structure:
   ]
 }
 
-==================================================
-SCORING
-==================================================
-
-100 = Excellent production-quality code.
-
-90-99 = Very strong code with only minor improvements.
-
-75-89 = Good code with some meaningful improvements.
-
-60-74 = Several important improvements are needed.
-
-40-59 = Significant problems affecting quality, reliability,
-security, or maintainability.
-
-0-39 = Serious problems or fundamentally unsafe/broken code.
-
-Do not lower the score merely because the code is short.
-
-Do not increase the score merely because the code is simple.
-
-Be honest and evidence-based.
-
 Return ONLY valid JSON.
-`;
+
+Do not include a score.
+The application will calculate the score separately.`;
 
   const response = await groq.chat.completions.create({
     model: "openai/gpt-oss-120b",
