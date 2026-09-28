@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+
+import prisma from "./prisma.js";
 import { reviewCode, learnFromFeedback } from "./reviewer.js";
 
 const app = express();
@@ -14,9 +16,9 @@ app.get("/", (req, res) => {
   });
 });
 
-// ===============================
+// =====================================================
 // REVIEW CODE
-// ===============================
+// =====================================================
 
 app.post("/api/review", async (req, res) => {
   try {
@@ -32,13 +34,36 @@ app.post("/api/review", async (req, res) => {
       });
     }
 
+    console.log("🔍 Starting code review...");
+
+    // Hindsight + Groq review
     const result = await reviewCode(code, language, filetype);
+
+    // -------------------------------------------------
+    // SAVE REVIEW TO POSTGRESQL
+    // -------------------------------------------------
+
+    const savedReview = await prisma.review.create({
+      data: {
+        code,
+        summary: result.review.summary,
+        score: result.review.score,
+        issues: result.review.issues || [],
+        teamPreferences: result.review.teamPreferences || [],
+        positives: result.review.positives || [],
+      },
+    });
+
+    console.log(`💾 Review saved to PostgreSQL: ${savedReview.id}`);
 
     res.json({
       success: true,
+
       review: result.review,
-      memories: result.memories,
-      reviewId: result.reviewId,
+
+      memories: result.memories || [],
+
+      reviewId: savedReview.id,
     });
   } catch (error) {
     console.error("Review error:", error);
@@ -50,9 +75,9 @@ app.post("/api/review", async (req, res) => {
   }
 });
 
-// ===============================
+// =====================================================
 // TEACH AGENT
-// ===============================
+// =====================================================
 
 app.post("/api/feedback", async (req, res) => {
   try {
@@ -80,9 +105,9 @@ app.post("/api/feedback", async (req, res) => {
   }
 });
 
-// ===============================
+// =====================================================
 // REVIEW HISTORY
-// ===============================
+// =====================================================
 
 app.get("/api/reviews", async (req, res) => {
   try {
@@ -106,9 +131,9 @@ app.get("/api/reviews", async (req, res) => {
   }
 });
 
-// ===============================
+// =====================================================
 // SINGLE REVIEW
-// ===============================
+// =====================================================
 
 app.get("/api/reviews/:id", async (req, res) => {
   try {
@@ -141,49 +166,9 @@ app.get("/api/reviews/:id", async (req, res) => {
   }
 });
 
-app.get("/api/reviews", async (req, res) => {
-  try {
-    const reviews = await prisma.review.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    res.json({
-      success: true,
-      reviews,
-    });
-  } catch (error) {
-    console.error("History error:", error);
-
-    res.status(500).json({
-      success: false,
-      error: "Failed to load review history",
-    });
-  }
-});
-
-app.get("/api/reviews", async (req, res) => {
-  try {
-    const reviews = await prisma.review.findMany({
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    res.json({
-      success: true,
-      reviews,
-    });
-  } catch (error) {
-    console.error("History error:", error);
-
-    res.status(500).json({
-      success: false,
-      error: "Failed to load review history",
-    });
-  }
-});
+// =====================================================
+// SERVER
+// =====================================================
 
 const PORT = process.env.PORT || 5000;
 

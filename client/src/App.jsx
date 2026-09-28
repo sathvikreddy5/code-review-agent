@@ -39,7 +39,7 @@ function App() {
   // ================================
 
   const [activePage, setActivePage] = useState("review");
-
+  const [lastReviewId, setLastReviewId] = useState(null);
   // Used by the upcoming Review Details feature
   const [selectedReviewId, setSelectedReviewId] = useState(null);
 
@@ -103,6 +103,7 @@ function App() {
 
       setReview(data.review);
       setMemories(data.memories || []);
+      setLastReviewId(data.reviewId || null);
 
       setLearningEvents((previous) => [
         {
